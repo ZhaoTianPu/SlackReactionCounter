@@ -8,9 +8,8 @@ import textwrap
 
 from bs4 import BeautifulSoup
 from dateutil.relativedelta import relativedelta
-from dotenv import load_dotenv
+from dotenv import load_dotenv; load_dotenv() # Reads .env file
 
-load_dotenv()
 import numpy as np
 import requests
 from tabulate import tabulate
@@ -18,6 +17,8 @@ from tabulate import tabulate
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_sdk import WebClient
+
+from utils import parse_date
 
 # Verify correct environment variables are set
 if "SLACK_BOT_TOKEN" not in os.environ:
@@ -30,9 +31,6 @@ if "SLACK_CHANNEL_ID" not in os.environ:
     print("Missing environment variable :: SLACK_CHANNEL_ID")
     exit(1)
 
-# Channel ID
-CHANNEL_ID = os.environ["SLACK_CHANNEL_ID"]
-
 # Reactions to parse with associated weights
 REACTIONS = {"one": 1, "two": 2, "three": 3}
 
@@ -41,33 +39,6 @@ MAX_WIDTH = 80
 
 # Default number of results to include in summary table
 DEFAULT_NUM_RESULTS = 10
-
-
-# Date parser
-def parse_date(date):
-    """Parse argument date to days, weeks, months, years"""
-    days = 0
-    weeks = 0
-    months = 0
-    years = 0
-
-    last = 0
-    for i, dchar in enumerate(date):
-        if dchar == "d":
-            days = int(date[last:i])
-            last = i + 1
-        elif dchar == "w":
-            weeks = int(date[last:i])
-            last = i + 1
-        elif dchar == "m":
-            months = int(date[last:i])
-            last = i + 1
-        elif dchar == "y":
-            years = int(date[last:i])
-            last = i + 1
-
-    return days, weeks, months, years
-
 
 # Initialize slack app
 client = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
@@ -144,7 +115,7 @@ def command_handler(ack, body, respond):
         ).timetuple()
     )
     result = client.conversations_history(
-        channel=CHANNEL_ID, limit=1000, oldest=str(oldest_time)
+        channel=os.environ["SLACK_CHANNEL_ID"], limit=1000, oldest=str(oldest_time)
     )
 
     # Get threads and parse reactions
@@ -170,7 +141,7 @@ def command_handler(ack, body, respond):
             if "reactions" in thread:
                 thread_reactions = thread["reactions"]
                 for thread_reaction in thread_reactions:
-                    for i, (reaction, weight) in enumerate(REACTIONS.items()):
+                    for i, (reaction, _) in enumerate(REACTIONS.items()):
                         if thread_reaction["name"] == reaction:
                             rating[i] = thread_reaction["count"]
 
