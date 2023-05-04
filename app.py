@@ -31,7 +31,7 @@ if "SLACK_CHANNEL_ID" not in os.environ:
     exit(1)
 
 # Channel ID
-CHANNEL_ID = os.environ["SLACK_BOT_TOKEN"]
+CHANNEL_ID = os.environ["SLACK_CHANNEL_ID"]
 
 # Reactions to parse with associated weights
 REACTIONS = {"one": 1, "two": 2, "three": 3}
