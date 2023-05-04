@@ -1,66 +1,80 @@
-from bs4 import BeautifulSoup
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
-import numpy as np
+import os
 import re
-import requests
-from tabulate import tabulate
 import threading
 import time
 from time import sleep
 import textwrap
 
+from bs4 import BeautifulSoup
+from dateutil.relativedelta import relativedelta
+from dotenv import load_dotenv; load_dotenv()
+import numpy as np
+import requests
+from tabulate import tabulate
+
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from slack_sdk import WebClient
 
-# Slack bot and app tokens
-SLACK_BOT_TOKEN = "***REMOVED***"
-SLACK_APP_TOKEN = "***REMOVED***"
-
+# Channel ID
 CHANNEL_ID = "C5G5V0F1U"
 
+# Reactions to parse with associated weights
 REACTIONS = {
     "one": 1,
     "two": 2,
     "three": 3
 }
 
+# Max line width per column for bot output
 MAX_WIDTH = 80
 
+# Default number of results to include in summary table
 DEFAULT_NUM_RESULTS = 10
-
-# Initialize a Web API client and app
-client = WebClient(token=SLACK_BOT_TOKEN)
-app = App(token=SLACK_BOT_TOKEN)
 
 # Date parser
 def parse_date(date):
+    """Parse argument date to days, weeks, months, years
+    """
     days = 0
     weeks = 0
     months = 0
     years = 0
     
     last = 0
-    for i in range(len(date)):
-        if date[i] == "d":
+    for i, dchar in enumerate(date):
+        if dchar == "d":
             days = int(date[last:i])
             last = i+1
-        elif date[i] == "w":
+        elif dchar == "w":
             weeks = int(date[last:i])
             last = i+1
-        elif date[i] == "m":
+        elif dchar == "m":
             months = int(date[last:i])
             last = i+1
-        elif date[i] == "y":
+        elif dchar == "y":
             years = int(date[last:i])
             last = i+1
 
     return days, weeks, months, years
 
-# Function that responds to /papers command
+# Verify correct environment variables are set
+if "SLACK_BOT_TOKEN" not in os.environ:
+    print("Missing environment variable :: SLACK_BOT_TOKEN")
+    exit(1)
+if "SLACK_APP_TOKEN" not in os.environ:
+    print("Missing environment variable :: SLACK_APP_TOKEN")
+    exit(1)
+
+# Initialize slack app
+client = WebClient(token=os.environ["SLACK_BOT_TOKEN"])
+app = App(token=os.environ["SLACK_BOT_TOKEN"])
+
 @app.command("/papers")
 def command_handler(ack, body, respond):
+    """Function that responds to /papers command
+    """
     # Handle arguments
     args = body["text"].split(" ")
     show_total_ranking = False
@@ -68,6 +82,7 @@ def command_handler(ack, body, respond):
     num_results = DEFAULT_NUM_RESULTS
 
     if "help" in args:
+        # Ugly, but does the job
         res = "Paper database ranking counter (/papers)\n\n"
         res += "Options:\n"
 
@@ -81,7 +96,10 @@ def command_handler(ack, body, respond):
         res += "\t\tChange oldest message thread to argument (e.g., *range 3m5d* for 3 months 5 days)\n"
 
         res += "\tlimit N\n"
-        res += "\t\tChange number of results in the ranking"
+        res += "\t\tChange number of results in the ranking\n"
+        
+        res += "\tprivate\n"
+        res += "\t\tDon't post results in channel"
         
         return ack({
             "text": res
@@ -114,7 +132,7 @@ def command_handler(ack, body, respond):
 
     # Get channel history
     oldest_time = time.mktime((
-        datetime.now() 
+        datetime.now()
         + relativedelta(days=-date_range["d"], weeks=-date_range["w"], months=-date_range["m"], years=-date_range["y"]
         )).timetuple())
     result = client.conversations_history(
@@ -122,21 +140,21 @@ def command_handler(ack, body, respond):
     )
 
     # Get threads and parse reactions
-    threads = []
-
-    # Function for parsing thread --- allows for multi-threading while waiting for title
+    threads = [] # List of dict containing information on each paper thread
     def parse_thread(thread):
+        """Function for parsing thread --- allows for multi-threading while waiting for title
+        """
         try:
             # Get text
             text = thread["text"]
 
             # Get link
-            link = re.match(r"<?https?://[^\s]+>", text).group()[1:-1].split("|")[0]
+            link = re.match(r"<https?://[^\s]+>", text).group()[1:-1].split("|")[0]
             if link is None:
                 return # No link found in thread
 
             # Get the title of the paper
-            r = requests.get(link)
+            r = requests.get(link, timeout=10)
             html = BeautifulSoup(r.text, "html.parser")
 
             # Compute rating
@@ -144,7 +162,7 @@ def command_handler(ack, body, respond):
             if "reactions" in thread:
                 thread_reactions = thread["reactions"]
                 for thread_reaction in thread_reactions:
-                    for i, (reaction, weight) in enumerate(REACTIONS.items()): 
+                    for i, (reaction, weight) in enumerate(REACTIONS.items()):
                         if thread_reaction["name"] == reaction:
                             rating[i] = thread_reaction["count"]
 
@@ -177,7 +195,7 @@ def command_handler(ack, body, respond):
     for task in tasks:
         task.join()
 
-    # Sort papers by weighted average and total score
+    # Sort papers by weighted average or total score
     res = ""
     sorted_threads = []
     headers = []
@@ -203,13 +221,14 @@ def command_handler(ack, body, respond):
                 thread[1]["link"] + "\n" + '\n'.join(textwrap.wrap(thread[1]["title"], width=MAX_WIDTH))
                 ])
             
-    res += "```" + tabulate(table, headers=headers) + "```"
+    res += "```" + tabulate(table, headers=headers) + "```" # Format results nicely
 
     respond({
-        "response_type": "in_channel",
+        "response_type": "ephemeral" if "private" in args else "in_channel",
         "text": res
     })
 
 if __name__ == "__main__":
-    handler = SocketModeHandler(app, SLACK_APP_TOKEN)
+    # Initialize a Web API client and app
+    handler = SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
     handler.start()
