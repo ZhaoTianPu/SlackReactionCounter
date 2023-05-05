@@ -30,6 +30,7 @@ for env in ["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "SLACK_CHANNEL_ID"]:
 REACTIONS = {"one": 1, "two": 2, "three": 3}
 
 # Max line width per column for bot output
+MOBILE_MAX_WIDTH = 50
 MAX_WIDTH = 80
 
 # Default number of results to include in summary table
@@ -67,7 +68,10 @@ def command_handler(ack, body, respond):
         res += "\t\tChange number of results in the ranking\n"
 
         res += "\tprivate\n"
-        res += "\t\tDon't post results in channel"
+        res += "\t\tDon't post results in channel\n"
+        
+        res += "\tmobile\n"
+        res += "\t\tMobile-friendly output"
 
         return ack(res)
     if "total" in args:
@@ -197,20 +201,44 @@ def command_handler(ack, body, respond):
         headers = ["Rank", "Avg. Score", "# voters", "Link and title"]
 
     # Send the results
-    table = []
-    for rank, thread in enumerate(sorted_threads[:num_results]):
-        table.append(
-            [
-                rank + 1,
-                thread[0],
-                thread[1]["num_votes"],
-                thread[1]["link"]
-                + "\n"
-                + "\n".join(textwrap.wrap(thread[1]["title"], width=MAX_WIDTH)),
-            ]
-        )
+    if "mobile" in args:
+        res += "```"
+        res += " | ".join(headers)
+        res += "\n=====\n"
+        for rank, thread in enumerate(sorted_threads[:num_results]):
+            # Rank | Score | Num votes
+            row = []
+            row.append(str(rank + 1))
+            row.append(str(thread[0]))
+            row.append(str(thread[1]["num_votes"]))
+            res += " | ".join(row)
+            
+            # Link
+            res += "\n"
+            res += thread[1]["link"]
+            
+            # Title
+            res += "\n"
+            res += "\n".join(textwrap.wrap(thread[1]["title"], width=MOBILE_MAX_WIDTH))
+            
+            # Visual spacer
+            res += "\n=====\n"
+        res += "```"
+    else:
+        table = []
+        for rank, thread in enumerate(sorted_threads[:num_results]):
+            table.append(
+                [
+                    rank + 1,
+                    thread[0],
+                    thread[1]["num_votes"],
+                    thread[1]["link"]
+                    + "\n"
+                    + "\n".join(textwrap.wrap(thread[1]["title"], width=MAX_WIDTH)),
+                ]
+            )
 
-    res += "```" + tabulate(table, headers=headers) + "```"  # Format results nicely
+        res += "```" + tabulate(table, headers=headers) + "```"  # Format results nicely
 
     respond(
         {
