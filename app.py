@@ -21,15 +21,10 @@ from slack_sdk import WebClient
 from utils import parse_date
 
 # Verify correct environment variables are set
-if "SLACK_BOT_TOKEN" not in os.environ:
-    print("Missing environment variable :: SLACK_BOT_TOKEN")
-    exit(1)
-if "SLACK_APP_TOKEN" not in os.environ:
-    print("Missing environment variable :: SLACK_APP_TOKEN")
-    exit(1)
-if "SLACK_CHANNEL_ID" not in os.environ:
-    print("Missing environment variable :: SLACK_CHANNEL_ID")
-    exit(1)
+for env in ["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "SLACK_CHANNEL_ID"]:
+    if env not in os.environ:
+        print("Missing environment variable ::", env)
+        exit(1)
 
 # Reactions to parse with associated weights
 REACTIONS = {"one": 1, "two": 2, "three": 3}
@@ -74,7 +69,7 @@ def command_handler(ack, body, respond):
         res += "\tprivate\n"
         res += "\t\tDon't post results in channel"
 
-        return ack({"text": res})
+        return ack(res)
     if "total" in args:
         show_total_ranking = True
     if "range" in args:
@@ -89,7 +84,7 @@ def command_handler(ack, body, respond):
                     date_range["y"],
                 ) = parse_date(args[idx + 1])
             except:
-                return ack({"text": "Invalid date range :: " + args[idx + 1]})
+                return ack("Invalid date range :: " + args[idx + 1])
     if "limit" in args:
         idx = args.index("limit")
 
@@ -97,7 +92,7 @@ def command_handler(ack, body, respond):
             try:
                 num_results = int(args[idx + 1])
             except:
-                return ack({"text": "Invalid limit :: " + args[idx + 1]})
+                return ack("Invalid limit :: " + args[idx + 1])
 
     # Quickly acknowledge before 3sec timeout
     ack("Generating the list ...")
@@ -132,10 +127,6 @@ def command_handler(ack, body, respond):
             if link is None:
                 return  # No link found in thread
 
-            # Get the title of the paper
-            r = requests.get(link, timeout=10)
-            html = BeautifulSoup(r.text, "html.parser")
-
             # Compute rating
             rating = [0] * len(REACTIONS)
             if "reactions" in thread:
@@ -144,9 +135,13 @@ def command_handler(ack, body, respond):
                     for i, (reaction, _) in enumerate(REACTIONS.items()):
                         if thread_reaction["name"] == reaction:
                             rating[i] = thread_reaction["count"]
-
+            
             if sum(rating) == 0:
                 return  # No reactions
+                            
+            # Get the title of the paper
+            r = requests.get(link, timeout=10)
+            html = BeautifulSoup(r.text, "html.parser")
 
             # Eligible thread, add to list
             threads.append(
