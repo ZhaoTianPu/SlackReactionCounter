@@ -46,7 +46,7 @@ You need to create and configure a Slack bot in your Slack workspace first, befo
     4. `reactions:read`
 5. Enable slash commands: Under the `Features` section in the left panel, go to the `Slash Commands` tab. Create your own commands here. We use `/papers` in our group as the command.
 6. Install the bot. Under the `Settings` section in the left panel, go to the `Install App` tab and install/reinstall to the workspace. Copy `User OAuth Token` and `Bot User OAuth Token`.
-7. You will also need to get the ID of the Slack channel, from which threads will be ranked based on the reaction emojis. To obtain this, open your Slack workspace and click on the target channel, and the url reads: https://app.slack.com/client/&lt;workspace id&gt;/&lt;channel id&gt;. Copy the &lt;channel id&gt;.
+7. You will also need to get the ID of the Slack channel, from which threads will be ranked based on the reaction emojis. To obtain this, open your Slack workspace and click on the target channel, and the url reads: https://app.slack.com/client/ &lt;workspace id&gt;/&lt;channel id&gt;. Copy the &lt;channel id&gt;.
 ## How to run locally
 To run locally, simply execute `python app.py`, making sure you have all the required packages. Note that the environment variables `SLACK_BOT_TOKEN` (set the value to `Bot User OAuth Token`), `SLACK_APP_TOKEN` (set the value to `User OAuth Token`) and `SLACK_CHANNEL_ID` (set the value to &lt;channel id&gt;) should be set prior to running the app. This can easily be done by adding a `.env` file next to `app.py`. Next, run `/papers help` in an allowed channel to learn what can be done with this app.
 ## How to host on AWS
