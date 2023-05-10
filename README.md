@@ -53,3 +53,36 @@ To run locally, simply execute `python app.py`, making sure you have all the req
 To host on AWS, it is much more involved, but thankfully can be achieved with the free tier (max 1M requests per month). First, due to the 3 sec timeout set by Slack, the dispatcher `dispatcher.py` must be in its own AWS Lambda function that has publishing access to a SNS. Additionally, an AWS lambda API Gateway trigger must be added and set as the Slack app request URL.
 
 Next, the actual app should reside in another AWS Lambda function that triggers on an SNS event. Since AWS Lambda doesn't have all Python packages, you need to package the virtual environment Python packages (specifically `[virtualenv]/lib/python3.**/site-packages`, here packaged as `packages-python-3-10.zip`) with the python files `app.py`, `utils.py`, and `aws_app.py` into a zip file (here `app.zip`, generated with `package.sh`) and upload it to AWS. The environment variables (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN` and `SLACK_CHANNEL_ID`) can be set directly in the AWS dashboard. Note that the python version used in the virtual environment should match the one on AWS, as well as the operating system for packages such as `numpy`. Finally, because the app execution takes longer than 3 seconds, the timeout of the AWS Lambda function should be increased to a couple of minutes.  
+## Example output
+```
+Rank    Avg. Score    # voters  Link and title
+------  ------------  ----------  -------------------------------------------------------------------------------
+     1           3             4  http://arxiv.org/abs/2305.02907
+                                  [2305.02907] Versatile parametric coupling between two statically decoupled
+                                  transmon qubits
+     2           3             6  http://arxiv.org/abs/2304.10401
+                                  [2304.10401] The quartic Blochnium: an anharmonic quasicharge superconducting
+                                  qubit
+     3           3             4  http://arxiv.org/abs/2304.09345
+                                  [2304.09345] Advancements in Superconducting Microwave Cavities and Qubits for
+                                  Quantum Information Systems
+     4           2.8           5  https://journals.aps.org/prx/abstract/10.1103/PhysRevX.13.021017
+                                  Phys. Rev. X 13, 021017 (2023)  -  Consistent Quantization of Nearly Singular
+                                  Superconducting Circuits
+     5           2.8           5  https://arxiv.org/abs/2304.05601
+                                  [2304.05601] Quantum control and noise protection of a Floquet $0-π$ qubit
+     6           2.7           7  http://arxiv.org/abs/2304.08531
+                                  [2304.08531] Symplectic geometry and circuit quantization
+     7           2.6           5  https://journals.aps.org/prxquantum/abstract/10.1103/PRXQuantum.4.020319
+                                  PRX Quantum 4, 020319 (2023)  -  Experimental Realization and Characterization
+                                  of Stabilized Pair-Coherent States
+     8           2.5           4  http://arxiv.org/abs/2304.13656
+                                  [2304.13656] A diagrammatic method to compute the effective Hamiltonian of
+                                  driven nonlinear oscillators
+     9           2.5           2  https://arxiv.org/abs/2304.01741
+                                  [2304.01741] An Intuitive Visualisation Method for Arbitrary Qutrit (Three
+                                  Level) States
+    10           2.3           3  http://link.aps.org/doi/10.1103/PhysRevB.107.195405
+                                  Phys. Rev. B 107, 195405 (2023)  -  Quantum phase slips in a resonant Josephson
+                                  junction
+```
