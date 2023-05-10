@@ -55,7 +55,7 @@ To host on AWS, it is much more involved, but thankfully can be achieved with th
 Next, the actual app should reside in another AWS Lambda function that triggers on an SNS event. Since AWS Lambda doesn't have all Python packages, you need to package the virtual environment Python packages (specifically `[virtualenv]/lib/python3.**/site-packages`, here packaged as `packages-python-3-10.zip`) with the python files `app.py`, `utils.py`, and `aws_app.py` into a zip file (here `app.zip`, generated with `package.sh`) and upload it to AWS. The environment variables (`SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN` and `SLACK_CHANNEL_ID`) can be set directly in the AWS dashboard. Note that the python version used in the virtual environment should match the one on AWS, as well as the operating system for packages such as `numpy`. Finally, because the app execution takes longer than 3 seconds, the timeout of the AWS Lambda function should be increased to a couple of minutes.  
 ## Example output
 ```
-Rank    Avg. Score    # voters  Link and title
+  Rank    Avg. Score    # voters  Link and title
 ------  ------------  ----------  -------------------------------------------------------------------------------
      1           3             4  http://arxiv.org/abs/2305.02907
                                   [2305.02907] Versatile parametric coupling between two statically decoupled
