@@ -1,4 +1,7 @@
 # SlackReactionCounter
+(Tianpu Zhao)[https://github.com/ZhaoTianPu]* and (André Vallières)[https://github.com/pwndr3]*
+
+*Authors contributed equally
 ## Brief description
 Slack app for counting the number of reactions in a particular channel and sorting them based on a weighted average or total score. In our group, we use a channel to post relevant papers to our research. Group members then rate each paper for its relevancy, using reactions :one:, :two:, or :three: (corresponding to emojis `:one:`, `:two:` and `:three:`), with respective weights 1, 2, and 3. Then, to select a paper to present as part of our journal club, we look at previously posted papers and select from the most relevant ones.
 ## Requiremenets
