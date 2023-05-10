@@ -1,5 +1,5 @@
 # SlackReactionCounter
-(Tianpu Zhao)[https://github.com/ZhaoTianPu]* and (André Vallières)[https://github.com/pwndr3]*
+[Tianpu Zhao](https://github.com/ZhaoTianPu)* and [André Vallières](https://github.com/pwndr3)*
 
 *Authors contributed equally
 ## Brief description
