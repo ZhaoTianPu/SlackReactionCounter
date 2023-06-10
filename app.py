@@ -127,7 +127,7 @@ def command_handler(ack, body, respond):
             text = thread["text"]
 
             # Get link
-            link = re.match(r"<https?://[^\s]+>", text).group()[1:-1].split("|")[0]
+            link = re.search(r"<https?://[^\s]+>", text).group()[1:-1].split("|")[0]
             if link is None:
                 return  # No link found in thread
 
