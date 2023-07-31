@@ -154,7 +154,7 @@ def command_handler(ack, body, respond):
                     "text": text,
                     "rating": rating,
                     "title": html.title.text,
-                    "num_votes": sum(rating),
+                    "num_voters": sum(rating),
                     "weighted_average": np.round(
                         np.average(list(REACTIONS.values()), weights=rating), 1
                     ),
@@ -186,17 +186,17 @@ def command_handler(ack, body, respond):
     if show_total_ranking:
         res = "*TOTAL POINTS RANKING SINCE " + since_date_str + "*\n"
         sorted_threads = sorted(
-            zip([x["total_rating"] for x in threads], threads),
-            key=lambda x: x[0],
-            reverse=True,
+            zip([x["total_rating"] for x in threads], [x["num_voters"] for x in threads], threads),
+            key=lambda x: (x[0], x[1]), # Sort by rating, subsort by # of voters
+            reverse=True
         )
         headers = ["Rank", "Total Score", "# voters", "Link and title"]
     else:
         res = "*WEIGHTED AVERAGE RANKING SINCE " + since_date_str + "*\n"
         sorted_threads = sorted(
-            zip([x["weighted_average"] for x in threads], threads),
-            key=lambda x: x[0],
-            reverse=True,
+            zip([x["weighted_average"] for x in threads], [x["num_voters"] for x in threads], threads),
+            key=lambda x: (x[0], x[1]),
+            reverse=True
         )
         headers = ["Rank", "Avg. Score", "# voters", "Link and title"]
 
@@ -210,16 +210,16 @@ def command_handler(ack, body, respond):
             row = []
             row.append(str(rank + 1))
             row.append(str(thread[0]))
-            row.append(str(thread[1]["num_votes"]))
+            row.append(str(thread[1]))
             res += " | ".join(row)
             
             # Link
             res += "\n"
-            res += thread[1]["link"]
+            res += thread[2]["link"]
             
             # Title
             res += "\n"
-            res += "\n".join(textwrap.wrap(thread[1]["title"], width=MOBILE_MAX_WIDTH))
+            res += "\n".join(textwrap.wrap(thread[2]["title"], width=MOBILE_MAX_WIDTH))
             
             # Visual spacer
             res += "\n=====\n"
@@ -231,10 +231,10 @@ def command_handler(ack, body, respond):
                 [
                     rank + 1,
                     thread[0],
-                    thread[1]["num_votes"],
-                    thread[1]["link"]
+                    thread[1],
+                    thread[2]["link"]
                     + "\n"
-                    + "\n".join(textwrap.wrap(thread[1]["title"], width=MAX_WIDTH)),
+                    + "\n".join(textwrap.wrap(thread[2]["title"], width=MAX_WIDTH)),
                 ]
             )
 
